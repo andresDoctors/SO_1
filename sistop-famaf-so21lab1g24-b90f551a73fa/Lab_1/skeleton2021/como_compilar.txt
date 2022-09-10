@@ -1,0 +1,6 @@
+Requisitos: tener las librerias check y glib
+
+1. Copiar los archivos dentro de la carpeta "objects-x86_64" o "objects-i386",
+(según su arquitectura) y pegarlos en "skeleton2021"
+
+2. llamar a 'make' desde "skeleton2021"

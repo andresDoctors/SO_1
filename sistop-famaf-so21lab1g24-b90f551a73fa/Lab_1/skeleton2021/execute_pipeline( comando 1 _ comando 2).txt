@@ -1,0 +1,88 @@
+execute_pipeline( apipe = comando 1 | comando 2) {
+len_apipe = 2u;
+pid = (pid_t*) calloc(2, sizeof(int));  // pid_t pid[2]
+array_pipes = (int*) calloc(2, sizeof(int)); // int array_pipes[2]
+
+pipe(array_pipes);
+/* Ahora lo que se excribe en array_pipes[1] se lee en array_pipes[0] */
+
+/* Ciclo gordo */
+for...
+    /* Primera iteracion */
+    pid[0] = fork();
+
+    if(pid[0] == 0) { // Estamos en el primer hijo, queremos ejecutar comando 1
+        dup2(array_pipes[1], 1);
+        /* Ahora todo lo que escibimos, lo hacemos en array_pipes[1] */
+
+        close(array_pipes[0]);
+        close(array_pipes[1]);
+        /* Cerramos los file descriptor que ya no vamos a usar (todos menos el 0 y el 1) */
+
+        if(! builtin_is_internal(apipe = comando 1 | comando 2)) { // si "comando 1" no es un 'cd' ni un 'exit'...
+            execute_scommand(apipe = apipe = comando 1 | comando 2) // ejecutamos "comand 1"
+        }
+
+        free(pid); pid = NULL;
+        free(array_pipes); array_pipes = NULL;
+        apipe = pipeline_destroy(apipe);
+        if (parser != NULL) {
+            parser = parser_destroy(parser);
+        }
+        /* Liberamos la memoria que reservó el padre (solo afecta a este proceso hijo) */
+
+        exit(EXIT_SUCCESS);
+        /* Matamos al hijo y devolvemos una señal de éxito */
+    }
+
+    else { Si seguimos en el padre...
+
+        pipeline_pop_front(apipe = comando 1 | comando 2);
+        /* apipe = comando 2 */
+    }
+
+    /* Segunda iteracion */
+    pid[1] = fork();
+
+    if(pid[1] == 0) { // Estamos en el segundo hijo, queremos ejecutar comando 1
+        dup2(array_pipes[0], 0);
+        /* Ahora todo lo que leemos, lo hacemos desde array_pipes[0] (donde escribió el primer hijo) */
+
+        close(array_pipes[0]);
+        close(array_pipes[1]);
+        /* Cerramos los file descriptor que ya no vamos a usar (todos menos el 0 y el 1) */
+
+        if(! builtin_is_internal(apipe = comando 2)) { // si "comando 2" no es un 'cd' ni un 'exit'...
+            execute_scommand(apipe = apipe = comando 2) // ejecutamos "comando 1"
+        }
+
+        free(pid); pid = NULL;
+        free(array_pipes); array_pipes = NULL;
+        apipe = pipeline_destroy(apipe);
+        if (parser != NULL) {
+            parser = parser_destroy(parser);
+        }
+        /* Liberamos la memoria que reservó el padre (solo afecta a este proceso hijo) */
+
+        exit(EXIT_SUCCESS);
+        /* Matamos al hijo y devolvemos una señal de éxito */
+    }
+
+    else { // seguimos en el padre
+        pipeline_pop_front(apipe = comando 2);
+        /* apipe = *vacio* */
+    }
+end for;
+
+close(array_pipes[0]);
+close(array_pipes[1]);
+/* Ya habiamos cerrado los file descriptor para los hijos, faltaba el padre */
+
+waitpid(pid[0], NULL, 0) // esperamos a que termine de ejecutarse el primer hijo
+waitpid(pid[1], NULL, 0) // esperamos a que termine de ejecutarse el segundo hijo
+
+free(pid); pid = NULL;
+free(array_pipes); array_pipes = NULL;
+/* Liberamos la memoria que reservamos nostros mismos (el padre), ya la habiamos liberado para los hijos, faltabamos nostros. */
+
+return;
